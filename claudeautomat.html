@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CLAUDE AUTOMAT</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f5f6fa; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .container { width: 90%; max-width: 600px; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: flex; flex-direction: column; height: 80vh; }
+        #chat-box { flex: 1; overflow-y: auto; border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-bottom: 10px; display: flex; flex-direction: column; }
+        .message { padding: 10px; border-radius: 8px; margin: 5px 0; max-width: 80%; }
+        .user { background: #5d67a9; color: white; align-self: flex-end; }
+        .bot { background: #eee; color: #333; align-self: flex-start; }
+        .input-area { display: flex; gap: 10px; }
+        input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px; outline: none; }
+        button { padding: 10px 20px; background: #5d67a9; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>CLAUDE AUTOMAT</h2>
+        <div id="chat-box"></div>
+        <div class="input-area">
+            <input type="text" id="user-input" placeholder="Décris ton automatisation...">
+            <button onclick="sendMessage()">Envoyer</button>
+        </div>
+    </div>
+
+    <script>
+        const WEBHOOK_URL = "https://n8n.srv1136446.hstgr.cloud/webhook-test/claude-automat";
+        let conversationId = localStorage.getItem('conversation_id') || 'session_' + Date.now();
+        localStorage.setItem('conversation_id', conversationId);
+
+        async function sendMessage() {
+            const input = document.getElementById('user-input');
+            const chatBox = document.getElementById('chat-box');
+            const message = input.value.trim();
+            if (!message) return;
+
+            appendMessage(message, 'user');
+            input.value = '';
+
+            try {
+                const response = await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message, conversation_id: conversationId })
+                });
+                const data = await response.json();
+                appendMessage(data.response || "Pas de réponse reçue", 'bot');
+            } catch (error) {
+                appendMessage("Erreur de connexion avec n8n", 'bot');
+            }
+        }
+
+        function appendMessage(text, side) {
+            const div = document.createElement('div');
+            div.className = `message ${side}`;
+            div.innerText = text;
+            const chatBox = document.getElementById('chat-box');
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    </script>
+</body>
+</html>
